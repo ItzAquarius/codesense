@@ -1,0 +1,29 @@
+# Remove this line → version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    container_name: codesense-backend
+    ports:
+      - "5000:5000"
+    environment:
+      - PORT=5000
+      - GROQ_API_KEY=${GROQ_API_KEY}
+    networks:
+      - codesense-network
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    container_name: codesense-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - codesense-network
+    restart: unless-stopped
+
+networks:
+  codesense-network:
+    driver: bridge
