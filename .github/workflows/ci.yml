@@ -14,6 +14,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Show repository structure
+        run: ls -la
+
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
@@ -26,6 +29,14 @@ jobs:
       - name: Run backend tests
         working-directory: ./backend
         run: npm test --if-present
+
+      - name: Install frontend dependencies
+        working-directory: ./frontend
+        run: npm install
+
+      - name: Build React app
+        working-directory: ./frontend
+        run: npm run build
 
   build-and-push:
     name: Build & Push to Docker Hub
