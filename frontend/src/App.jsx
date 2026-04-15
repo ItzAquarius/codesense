@@ -14,7 +14,7 @@ export default function App() {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch('/api/review', {
+      const res = await fetch('https://codesense-backend-rc2u.onrender.com/api/review', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code, language })
