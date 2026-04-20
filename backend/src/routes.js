@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+const Groq = require('groq-sdk');
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 // Health check
 router.get('/health', (req, res) => {
@@ -12,15 +12,14 @@ router.get('/health', (req, res) => {
 // Run code using Piston API
 router.post('/run', async (req, res) => {
   const { code, language } = req.body;
-
   if (!code) return res.status(400).json({ error: 'No code provided' });
 
   const languageMap = {
-    python: { language: 'python', version: '3.10.0' },
-    javascript: { language: 'node', version: '18.15.0' },
+    python:     { language: 'python',     version: '3.10.0' },
+    javascript: { language: 'node',       version: '18.15.0' },
     typescript: { language: 'typescript', version: '5.0.3' },
-    java: { language: 'java', version: '15.0.2' },
-    'c++': { language: 'cpp', version: '10.2.0' },
+    java:       { language: 'java',       version: '15.0.2' },
+    'c++':      { language: 'cpp',        version: '10.2.0' },
   };
 
   const lang = languageMap[language?.toLowerCase()] || { language: 'python', version: '3.10.0' };
@@ -35,32 +34,31 @@ router.post('/run', async (req, res) => {
         files: [{ content: code }]
       })
     });
-
     const data = await response.json();
     res.json({
       output: data.run?.output || 'No output',
       stderr: data.run?.stderr || '',
       code: data.run?.code
     });
-
   } catch (error) {
     res.status(500).json({ error: 'Code execution failed', details: error.message });
   }
 });
 
-// AI Code Review + Suggestion
+// AI Code Review using Groq
 router.post('/review', async (req, res) => {
   const { code, language } = req.body;
-
   if (!code) return res.status(400).json({ error: 'No code provided' });
 
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-
-    const prompt = `You are an expert code reviewer. Analyze the following ${language || 'code'}.
-
+    const response = await groq.chat.completions.create({
+      model: 'llama-3.3-70b-versatile',
+      max_tokens: 2048,
+      messages: [
+        {
+          role: 'user',
+          content: `You are an expert code reviewer. Analyze the following ${language || 'code'}.
 Return ONLY a raw JSON object with no markdown, no backticks, no explanation. Just the JSON.
-
 {
   "status": "optimized" or "needs_improvement",
   "summary": "one line verdict",
@@ -73,26 +71,24 @@ Return ONLY a raw JSON object with no markdown, no backticks, no explanation. Ju
   },
   "improved_code": "full improved version of the code"
 }
-
 Code to review:
-${code}`;
+${code}`
+        }
+      ]
+    });
 
-    const result = await model.generateContent(prompt);
-    const text = result.response.text();
+    const text = response.choices[0].message.content;
 
     // Robust JSON extraction
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    const clean = text.replace(/```json|```/g, '').trim();
+    const jsonMatch = clean.match(/\{[\s\S]*\}/);
     if (!jsonMatch) throw new Error('No JSON found in response');
 
     const parsed = JSON.parse(jsonMatch[0]);
-
-    res.json({
-      language: language || 'unknown',
-      ...parsed
-    });
+    res.json({ language: language || 'unknown', ...parsed });
 
   } catch (error) {
-    console.error('Gemini API error:', error);
+    console.error('Groq API error:', error);
     res.status(500).json({ error: 'AI review failed', details: error.message });
   }
 });
