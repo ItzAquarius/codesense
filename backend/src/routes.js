@@ -17,10 +17,10 @@ router.post('/run', async (req, res) => {
 
   const languageMap = {
     python: { language: 'python', version: '3.10.0' },
-    javascript: { language: 'javascript', version: '18.15.0' },
+    javascript: { language: 'node', version: '18.15.0' },
+    typescript: { language: 'typescript', version: '5.0.3' },
     java: { language: 'java', version: '15.0.2' },
-    cpp: { language: 'cpp', version: '10.2.0' },
-    c: { language: 'c', version: '10.2.0' },
+    'c++': { language: 'cpp', version: '10.2.0' },
   };
 
   const lang = languageMap[language?.toLowerCase()] || { language: 'python', version: '3.10.0' };
@@ -59,7 +59,8 @@ router.post('/review', async (req, res) => {
 
     const prompt = `You are an expert code reviewer. Analyze the following ${language || 'code'}.
 
-Return your response in this EXACT JSON format (no markdown, no backticks, just raw JSON):
+Return ONLY a raw JSON object with no markdown, no backticks, no explanation. Just the JSON.
+
 {
   "status": "optimized" or "needs_improvement",
   "summary": "one line verdict",
@@ -70,7 +71,7 @@ Return your response in this EXACT JSON format (no markdown, no backticks, just 
     "best_practices": "feedback here",
     "code_quality": "feedback here"
   },
-  "improved_code": "the full improved version of the code here"
+  "improved_code": "full improved version of the code"
 }
 
 Code to review:
@@ -79,9 +80,11 @@ ${code}`;
     const result = await model.generateContent(prompt);
     const text = result.response.text();
 
-    // Clean and parse JSON
-    const clean = text.replace(/```json|```/g, '').trim();
-    const parsed = JSON.parse(clean);
+    // Robust JSON extraction
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error('No JSON found in response');
+
+    const parsed = JSON.parse(jsonMatch[0]);
 
     res.json({
       language: language || 'unknown',
