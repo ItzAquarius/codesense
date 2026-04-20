@@ -11,22 +11,24 @@ export default function ReviewResult({ review, output }) {
             ▶️ Code Output
           </h2>
           {output ? (
-            <>
-              {output.stderr ? (
-                <pre className="text-red-400 text-sm font-mono whitespace-pre-wrap bg-red-900/10 rounded-lg p-3">
-                  {output.stderr}
-                </pre>
-              ) : (
-                <pre className="text-emerald-300 text-sm font-mono whitespace-pre-wrap bg-zinc-800 rounded-lg p-3">
-                  {output.output || 'No output'}
-                </pre>
-              )}
-            </>
-          ) : (
-            <div className="flex items-center justify-center h-32 text-zinc-600 text-sm">
-              Click "Run Code" to see output
-            </div>
-          )}
+  <>
+    {output.stderr ? (
+      <pre className="text-red-400 text-sm font-mono whitespace-pre-wrap bg-red-900/10 rounded-lg p-3">
+        {output.stderr}
+      </pre>
+    ) : (
+      <pre className="text-emerald-300 text-sm font-mono whitespace-pre-wrap bg-zinc-800 rounded-lg p-3">
+        {output.output && output.output !== 'No output'
+          ? output.output
+          : '(no output produced)'}
+      </pre>
+    )}
+  </>
+) : (
+  <div className="flex items-center justify-center h-32 text-zinc-600 text-sm">
+    Click "Run Code" to see output
+  </div>
+)}
         </div>
 
         {/* Right — Improved Code */}

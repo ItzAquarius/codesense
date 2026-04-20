@@ -52,28 +52,27 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white flex flex-col">
-      <Header />
-      <main className="flex-1 p-8 max-w-7xl mx-auto w-full">
-        <CodeEditor
-          code={code}
-          language={language}
-          onCodeChange={setCode}
-          onLanguageChange={setLanguage}
-          onSubmit={handleReview}
-          onRun={handleRun}
-          loading={loading}
-          running={running}
-        />
-        {error && (
-          <p className="text-red-400 text-sm mt-4 bg-red-900/20 border border-red-800 rounded-lg p-3">
-            {error}
-          </p>
-        )}
-        {(review || output) && (
-          <ReviewResult review={review} output={output} />
-        )}
-      </main>
-    </div>
-  )
+  <div className="min-h-screen bg-zinc-950 text-white flex flex-col">
+    <Header />
+    <main className="flex-1 p-8 max-w-7xl mx-auto w-full">
+      <CodeEditor
+        code={code}
+        language={language}
+        onCodeChange={setCode}
+        onLanguageChange={setLanguage}
+        onSubmit={handleReview}
+        onRun={handleRun}
+        loading={loading}
+        running={running}
+      />
+      {error && (
+        <p className="text-red-400 text-sm mt-4 bg-red-900/20 border border-red-800 rounded-lg p-3">
+          {error}
+        </p>
+      )}
+      {/* Always render ReviewResult so output panel is always visible */}
+      <ReviewResult review={review} output={output} />
+    </main>
+  </div>
+)
 }
